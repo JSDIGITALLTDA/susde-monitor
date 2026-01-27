@@ -98,7 +98,7 @@ export default function App() {
         days: daysToExpiry,
         impliedYield: impliedApy * 100,
         underlyingYield: underlyingApy * 100,
-        expiry: expiryDate.toLocaleDateString('pt-BR'),
+        expiry: expiryDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         tvl: tvl,
         address: market.address,
         name: market.name || market.proName,
@@ -151,7 +151,7 @@ export default function App() {
       const variance = Math.sin(i / 15) * 2 + (Math.random() - 0.5) * 1.5;
       
       data.push({
-        date: date.toLocaleDateString('pt-BR', { month: 'short', day: 'numeric' }),
+        date: date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
         spread: parseFloat((baseSpread + variance).toFixed(2)),
       });
     }
@@ -181,22 +181,22 @@ export default function App() {
     if (termSpread > 0) return { 
       text: 'BULLISH', 
       color: '#10b981', 
-      probability: '80%+ prob. retornos positivos (90d)'
+      probability: '80%+ prob. of positive returns (90d)'
     };
     if (termSpread < -7.5) return { 
       text: 'BEARISH', 
       color: '#ef4444', 
-      probability: '<20% prob. retornos positivos (90d)'
+      probability: '<20% prob. of positive returns (90d)'
     };
     if (termSpread < -5) return { 
       text: 'CAUTIOUS', 
       color: '#f97316', 
-      probability: '~40% prob. retornos positivos (90d)'
+      probability: '~40% prob. of positive returns (90d)'
     };
     return { 
       text: 'NEUTRAL', 
       color: '#f59e0b', 
-      probability: '~50% prob. retornos positivos (90d)'
+      probability: '~50% prob. of positive returns (90d)'
     };
   };
 
@@ -275,7 +275,7 @@ export default function App() {
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           {lastUpdate && (
             <span style={{ color: '#64748b', fontSize: '12px' }}>
-              {lastUpdate.toLocaleTimeString('pt-BR')}
+              {lastUpdate.toLocaleTimeString('en-US')}
             </span>
           )}
           <button
@@ -292,7 +292,7 @@ export default function App() {
               fontWeight: 600,
             }}
           >
-            {loading ? '⟳ Carregando...' : '🔄 Atualizar'}
+            {loading ? '⟳ Loading...' : '🔄 Refresh'}
           </button>
         </div>
       </div>
@@ -322,7 +322,7 @@ export default function App() {
         }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
-            <p style={{ color: '#64748b' }}>Buscando dados do Pendle...</p>
+            <p style={{ color: '#64748b' }}>Fetching data from Pendle...</p>
           </div>
         </div>
       )}
@@ -377,7 +377,7 @@ export default function App() {
                 {getRegimeLabel()}
               </p>
               <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>
-                {termSpread > 0 ? 'Curva ascendente' : 'Curva descendente'}
+                {termSpread > 0 ? 'Upward sloping curve' : 'Downward sloping curve'}
               </p>
             </div>
 
@@ -389,7 +389,7 @@ export default function App() {
               border: `1px solid ${signal.color}33`,
             }}>
               <p style={{ color: '#64748b', fontSize: '12px', margin: 0, textTransform: 'uppercase', letterSpacing: '1px' }}>
-                Sinal (90d)
+                Signal (90d)
               </p>
               <p style={{ fontSize: '28px', fontWeight: 700, margin: '8px 0', color: signal.color }}>
                 {signal.text}
@@ -484,7 +484,7 @@ export default function App() {
                 Term Spread (90d)
               </h3>
               <p style={{ color: '#64748b', fontSize: '11px', margin: '0 0 12px' }}>
-                *Simulado
+                *Simulated
               </p>
               <ResponsiveContainer width="100%" height={260}>
                 <AreaChart data={historicalSpread}>
@@ -520,14 +520,14 @@ export default function App() {
             overflowX: 'auto',
           }}>
             <h3 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: 600, color: '#e2e8f0' }}>
-              Mercados Ativos ({termStructure.length})
+              Active Markets ({termStructure.length})
             </h3>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.2)' }}>
-                  <th style={{ textAlign: 'left', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Mercado</th>
-                  <th style={{ textAlign: 'right', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Vencimento</th>
-                  <th style={{ textAlign: 'right', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Dias</th>
+                  <th style={{ textAlign: 'left', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Market</th>
+                  <th style={{ textAlign: 'right', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Expiry</th>
+                  <th style={{ textAlign: 'right', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Days</th>
                   <th style={{ textAlign: 'right', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Implied APY</th>
                   <th style={{ textAlign: 'right', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>TVL</th>
                 </tr>
@@ -569,7 +569,7 @@ export default function App() {
             marginBottom: '32px',
           }}>
             <h3 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: 600, color: '#e2e8f0' }}>
-              Análise: P(Retorno Positivo) por Decil do Term Spread
+              Analysis: P(Positive Return) by Term Spread Decile
             </h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={returnSkewData}>
@@ -582,16 +582,16 @@ export default function App() {
                       const data = payload[0].payload;
                       return (
                         <div style={{ background: 'rgba(15, 23, 42, 0.95)', border: '1px solid rgba(148, 163, 184, 0.2)', borderRadius: '8px', padding: '12px 16px' }}>
-                          <p style={{ color: '#e2e8f0', fontSize: '12px', margin: 0 }}>Decil: {data.decile}</p>
+                          <p style={{ color: '#e2e8f0', fontSize: '12px', margin: 0 }}>Decile: {data.decile}</p>
                           <p style={{ color: '#60a5fa', fontSize: '14px', margin: '4px 0' }}>Mean Skew: {data.meanSkew}%</p>
-                          <p style={{ color: '#10b981', fontSize: '14px', margin: 0 }}>P(Retorno+): {data.positiveProb}%</p>
+                          <p style={{ color: '#10b981', fontSize: '14px', margin: 0 }}>P(Positive): {data.positiveProb}%</p>
                         </div>
                       );
                     }
                     return null;
                   }}
                 />
-                <Bar dataKey="positiveProb" name="P(Retorno Positivo)">
+                <Bar dataKey="positiveProb" name="P(Positive Return)">
                   {returnSkewData.map((entry, index) => (
                     <Cell key={`cell-${index}`} fill={entry.positiveProb > 60 ? '#10b981' : entry.positiveProb < 40 ? '#ef4444' : '#f59e0b'} fillOpacity={0.8} />
                   ))}
@@ -603,14 +603,14 @@ export default function App() {
           {/* Key Statistics */}
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
             <div style={{ background: 'rgba(30, 41, 59, 0.6)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(148, 163, 184, 0.1)' }}>
-              <p style={{ color: '#64748b', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>Média Histórica</p>
+              <p style={{ color: '#64748b', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>Historical Mean</p>
               <p style={{ fontSize: '24px', fontWeight: 700, margin: '8px 0 4px', color: '#e2e8f0' }}>-2.63%</p>
               <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>σ = 2.71%</p>
             </div>
             <div style={{ background: 'rgba(30, 41, 59, 0.6)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(148, 163, 184, 0.1)' }}>
               <p style={{ color: '#64748b', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>Contango</p>
               <p style={{ fontSize: '24px', fontWeight: 700, margin: '8px 0 4px', color: '#10b981' }}>11.18%</p>
-              <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>das observações</p>
+              <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>of observations</p>
             </div>
             <div style={{ background: 'rgba(30, 41, 59, 0.6)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(148, 163, 184, 0.1)' }}>
               <p style={{ color: '#64748b', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>Steep Backwardation</p>
@@ -618,9 +618,9 @@ export default function App() {
               <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>({'<'}-7.5%)</p>
             </div>
             <div style={{ background: 'rgba(30, 41, 59, 0.6)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(148, 163, 184, 0.1)' }}>
-              <p style={{ color: '#64748b', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>Mercados</p>
+              <p style={{ color: '#64748b', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>Markets</p>
               <p style={{ fontSize: '24px', fontWeight: 700, margin: '8px 0 4px', color: '#60a5fa' }}>{termStructure.length}</p>
-              <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>ativos</p>
+              <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>active</p>
             </div>
           </div>
         </>
@@ -629,7 +629,7 @@ export default function App() {
       {/* Footer */}
       <div style={{ marginTop: '32px', padding: '16px', borderTop: '1px solid rgba(148, 163, 184, 0.1)', textAlign: 'center' }}>
         <p style={{ color: '#475569', fontSize: '11px', margin: 0 }}>
-          Dados via Pendle API • Análise baseada em @blocktower_ • Auto-refresh: 5min
+          Data via Pendle API • Analysis based on @blocktower_ research • Auto-refresh: 5min
         </p>
       </div>
     </div>
