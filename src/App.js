@@ -1,9 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine, BarChart, Bar, Cell } from 'recharts';
+import { XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Area, AreaChart, ReferenceLine, BarChart, Bar, Cell } from 'recharts';
 
-// Pendle API Configuration
+// Pendle API Configuration - Multiple chains
+const CHAINS = [
+  { id: 1, name: 'Ethereum' },
+  { id: 9745, name: 'Plasma' },
+];
+
 const PENDLE_API_BASE = 'https://api-v2.pendle.finance/core/v1';
-const CHAIN_ID = 1; // Ethereum Mainnet
 
 export default function App() {
   const [termStructure, setTermStructure] = useState([]);
@@ -14,50 +18,43 @@ export default function App() {
   const [lastUpdate, setLastUpdate] = useState(null);
   const [historicalSpread, setHistoricalSpread] = useState([]);
 
-  // Fetch active markets from Pendle API
+  // Fetch active markets from ALL chains
   const fetchPendleMarkets = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
       
-      const response = await fetch(
-        `${PENDLE_API_BASE}/${CHAIN_ID}/markets/active?order_by=name%3A1&skip=0&limit=100`
+      // Fetch from all chains in parallel
+      const responses = await Promise.all(
+        CHAINS.map(chain =>
+          fetch(`${PENDLE_API_BASE}/${chain.id}/markets/active?limit=200`)
+            .then(r => r.json())
+            .then(data => ({
+              chain: chain.name,
+              chainId: chain.id,
+              markets: data.markets || []
+            }))
+            .catch(e => ({ chain: chain.name, chainId: chain.id, markets: [], error: e.message }))
+        )
       );
       
-      if (!response.ok) {
-        throw new Error(`API Error: ${response.status}`);
+      // Combine all markets from all chains
+      const allMarkets = responses.flatMap(r => 
+        r.markets.map(m => ({ ...m, chain: r.chain, chainId: r.chainId }))
+      );
+      
+      if (allMarkets.length === 0) {
+        throw new Error('No markets data received from any chain');
       }
       
-      const data = await response.json();
-      
-      // API returns { markets: [...] } not { results: [...] }
-      const allMarkets = data.markets || data.results || [];
-      
-      if (!Array.isArray(allMarkets) || allMarkets.length === 0) {
-        throw new Error('No markets data received from API');
-      }
-      
-      // Filter for sUSDe markets only
+      // Filter for sUSDe markets ONLY (exact match, not USDe)
       const susdeMarkets = allMarkets.filter(market => {
-        const name = (market.name || market.proName || '').toLowerCase();
-        const symbol = (market.underlyingAsset?.symbol || '').toLowerCase();
-        return name.includes('susde') || symbol.includes('susde');
+        const name = (market.name || '').toLowerCase();
+        return name === 'susde';
       });
       
       if (susdeMarkets.length === 0) {
-        // Show available market names for debugging
-        const availableNames = allMarkets.slice(0, 10).map(m => m.name).join(', ');
-        setError(`No sUSDe markets found. Available: ${availableNames}...`);
-        
-        // Try to use Ethena-related markets as fallback
-        const ethenaMarkets = allMarkets.filter(market => {
-          const name = (market.name || '').toLowerCase();
-          return name.includes('usde') || name.includes('ethena');
-        });
-        
-        if (ethenaMarkets.length > 0) {
-          processMarkets(ethenaMarkets);
-        }
+        setError('No sUSDe markets found across all chains');
       } else {
         processMarkets(susdeMarkets);
       }
@@ -82,13 +79,11 @@ export default function App() {
     if (sorted.length === 0) return;
     
     // Create term structure data
-    // Note: API has details.impliedApy not just impliedApy
     const structure = sorted.map(market => {
       const expiryDate = new Date(market.expiry);
       const today = new Date();
       const daysToExpiry = Math.ceil((expiryDate - today) / (1000 * 60 * 60 * 24));
       
-      // Handle different API response structures
       const impliedApy = market.details?.impliedApy || market.impliedApy || 0;
       const underlyingApy = market.details?.underlyingApy || market.underlyingApy || market.details?.aggregatedApy || 0;
       const tvl = market.details?.liquidity || market.liquidity?.usd || 0;
@@ -102,6 +97,7 @@ export default function App() {
         tvl: tvl,
         address: market.address,
         name: market.name || market.proName,
+        chain: market.chain,
       };
     });
     
@@ -136,8 +132,10 @@ export default function App() {
 
   const formatMaturity = (days) => {
     if (days <= 0) return 'Expired';
-    if (days <= 30) return `${days}D`;
-    if (days <= 90) return `${Math.round(days / 30)}M`;
+    if (days <= 14) return `${days}D`;
+    if (days <= 45) return '1M';
+    if (days <= 75) return '2M';
+    if (days <= 105) return '3M';
     return `${Math.round(days / 30)}M`;
   };
 
@@ -237,6 +235,12 @@ export default function App() {
     { decile: '90-100%', meanSkew: 22.8, positiveProb: 92 },
   ];
 
+  const getChainColor = (chain) => {
+    if (chain === 'Ethereum') return '#627eea';
+    if (chain === 'Plasma') return '#00d4aa';
+    return '#94a3b8';
+  };
+
   return (
     <div style={{
       minHeight: '100vh',
@@ -268,7 +272,7 @@ export default function App() {
             sUSDe Term Structure Monitor
           </h1>
           <p style={{ color: '#64748b', fontSize: '13px', margin: '8px 0 0' }}>
-            Pendle Finance • Live Data • Forward-Looking Signal
+            Pendle Finance • Multi-Chain (Ethereum + Plasma) • Live Data
           </p>
         </div>
         
@@ -322,7 +326,7 @@ export default function App() {
         }}>
           <div style={{ textAlign: 'center' }}>
             <div style={{ fontSize: '48px', marginBottom: '16px' }}>📊</div>
-            <p style={{ color: '#64748b' }}>Fetching data from Pendle...</p>
+            <p style={{ color: '#64748b' }}>Fetching data from Ethereum & Plasma...</p>
           </div>
         </div>
       )}
@@ -448,7 +452,7 @@ export default function App() {
                     fontSize={12}
                     tickLine={false}
                     tickFormatter={(v) => `${v.toFixed(1)}%`}
-                    domain={['dataMin - 1', 'dataMax + 1']}
+                    domain={['dataMin - 0.5', 'dataMax + 0.5']}
                   />
                   <Tooltip content={<CustomTooltip />} />
                   <Area 
@@ -520,12 +524,13 @@ export default function App() {
             overflowX: 'auto',
           }}>
             <h3 style={{ margin: '0 0 20px', fontSize: '16px', fontWeight: 600, color: '#e2e8f0' }}>
-              Active Markets ({termStructure.length})
+              Active sUSDe Markets ({termStructure.length})
             </h3>
             <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '13px' }}>
               <thead>
                 <tr style={{ borderBottom: '1px solid rgba(148, 163, 184, 0.2)' }}>
                   <th style={{ textAlign: 'left', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Market</th>
+                  <th style={{ textAlign: 'left', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Chain</th>
                   <th style={{ textAlign: 'right', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Expiry</th>
                   <th style={{ textAlign: 'right', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Days</th>
                   <th style={{ textAlign: 'right', padding: '12px 16px', color: '#64748b', fontWeight: 500 }}>Implied APY</th>
@@ -545,6 +550,18 @@ export default function App() {
                       {market.name}
                       {index === 0 && <span style={{ color: '#60a5fa', marginLeft: '8px', fontSize: '10px' }}>FRONT</span>}
                       {index === termStructure.length - 1 && termStructure.length > 1 && <span style={{ color: '#a78bfa', marginLeft: '8px', fontSize: '10px' }}>BACK</span>}
+                    </td>
+                    <td style={{ padding: '12px 16px' }}>
+                      <span style={{ 
+                        color: getChainColor(market.chain), 
+                        background: `${getChainColor(market.chain)}20`,
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        fontSize: '11px',
+                        fontWeight: 600
+                      }}>
+                        {market.chain}
+                      </span>
                     </td>
                     <td style={{ padding: '12px 16px', color: '#94a3b8', textAlign: 'right' }}>{market.expiry}</td>
                     <td style={{ padding: '12px 16px', color: '#94a3b8', textAlign: 'right' }}>{market.days}d</td>
@@ -620,7 +637,7 @@ export default function App() {
             <div style={{ background: 'rgba(30, 41, 59, 0.6)', borderRadius: '16px', padding: '20px', border: '1px solid rgba(148, 163, 184, 0.1)' }}>
               <p style={{ color: '#64748b', fontSize: '12px', margin: 0, textTransform: 'uppercase' }}>Markets</p>
               <p style={{ fontSize: '24px', fontWeight: 700, margin: '8px 0 4px', color: '#60a5fa' }}>{termStructure.length}</p>
-              <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>active</p>
+              <p style={{ color: '#94a3b8', fontSize: '12px', margin: 0 }}>across all chains</p>
             </div>
           </div>
         </>
@@ -629,7 +646,7 @@ export default function App() {
       {/* Footer */}
       <div style={{ marginTop: '32px', padding: '16px', borderTop: '1px solid rgba(148, 163, 184, 0.1)', textAlign: 'center' }}>
         <p style={{ color: '#475569', fontSize: '11px', margin: 0 }}>
-          Data via Pendle API • Analysis based on @blocktower_ research • Auto-refresh: 5min
+          Data via Pendle API • Chains: Ethereum + Plasma • Analysis based on @blocktower_ research • Auto-refresh: 5min
         </p>
       </div>
     </div>
