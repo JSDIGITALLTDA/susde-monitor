@@ -100,7 +100,7 @@ export default function App() {
       const expiryDate = new Date(market.expiry);
       const daysToExpiry = Math.ceil((expiryDate - new Date()) / (1000 * 60 * 60 * 24));
       const impliedApy = (market.details?.impliedApy || 0) * 100;
-      const underlyingApy = (market.details?.underlyingApy || 0) * 100;
+      const underlyingApy = (market.details?.aggregatedApy || 0) * 100;
       const tvl = market.details?.liquidity || 0;
       
       return {
