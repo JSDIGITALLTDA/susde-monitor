@@ -255,7 +255,6 @@ export default function App() {
                   <YAxis stroke="#64748b" fontSize={12} tickLine={false} tickFormatter={(v) => `${v}%`} domain={[-12, 4]} />
                   <Tooltip content={<CustomTooltip />} />
                   <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={2} />
-                  <ReferenceLine y={-7.5} stroke="#ef4444" strokeDasharray="3 3" />
                   <Area type="monotone" dataKey="spread" stroke="#60a5fa" strokeWidth={2} fill="url(#spreadGradient)" name="Term Spread" />
                 </AreaChart>
               </ResponsiveContainer>
