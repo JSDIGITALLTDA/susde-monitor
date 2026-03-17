@@ -252,7 +252,7 @@ export default function App() {
                   <defs><linearGradient id="spreadGradient" x1="0" y1="1" x2="0" y2="0"><stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/><stop offset="95%" stopColor="#ef4444" stopOpacity={0}/></linearGradient></defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="rgba(148,163,184,0.1)" />
                   <XAxis dataKey="date" stroke="#64748b" fontSize={10} tickLine={false} interval={14} />
-                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} tickFormatter={(v) => `${v}%`} domain={[-12, 4]} />
+                  <YAxis stroke="#64748b" fontSize={12} tickLine={false} tickFormatter={(v) => `${v}%`} domain={['dataMin - 0.5', 'dataMax + 0.5']} />
                   <Tooltip content={<CustomTooltip />} />
                   <ReferenceLine y={0} stroke="#94a3b8" strokeWidth={2} />
                   <Area type="monotone" dataKey="spread" stroke="#60a5fa" strokeWidth={2} fill="url(#spreadGradient)" name="Term Spread" />
